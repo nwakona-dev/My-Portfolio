@@ -1,15 +1,19 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { FaGithub } from "react-icons/fa";
+
 import {
   ArrowUpRight,
   ExternalLink,
   Layers3,
 } from "lucide-react";
+
 import { motion, useReducedMotion } from "framer-motion";
 
 // Spring Boot backend URL
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001"
+).replace(/\/+$/, "");
 
 // Resolve image URLs returned by the backend
 const getProjectImageUrl = (imageUrl) => {
@@ -28,11 +32,8 @@ const getProjectImageUrl = (imageUrl) => {
     return trimmedUrl;
   }
 
-  // Handle relative backend paths, e.g. /uploads/projects/image.webp
-  return `${API_BASE_URL.replace(/\/+$/, "")}/${trimmedUrl.replace(
-    /^\/+/,
-    ""
-  )}`;
+  // Handle relative backend paths
+  return `${API_BASE_URL}/${trimmedUrl.replace(/^\/+/, "")}`;
 };
 
 const ProjectCard = ({ project }) => {
@@ -48,6 +49,19 @@ const ProjectCard = ({ project }) => {
   const shouldReduceMotion = useReducedMotion();
 
   const resolvedImageUrl = getProjectImageUrl(imageUrl);
+
+  // Track which image has finished loading.
+  // Comparing URLs also resets the loaded state when the image changes.
+  const [loadedImageUrl, setLoadedImageUrl] = useState("");
+  const [failedImageUrl, setFailedImageUrl] = useState("");
+
+  const imageLoaded = Boolean(
+    resolvedImageUrl && loadedImageUrl === resolvedImageUrl
+  );
+
+  const imageFailed = Boolean(
+    resolvedImageUrl && failedImageUrl === resolvedImageUrl
+  );
 
   // Support technologies as an array or comma-separated string
   const technologyList = Array.isArray(technologies)
@@ -102,6 +116,32 @@ const ProjectCard = ({ project }) => {
     },
   };
 
+  // Only reveal the image after loading and decoding have completed.
+  const handleImageLoad = async (event) => {
+    const image = event.currentTarget;
+    const imageUrl = image.currentSrc || image.src;
+
+    try {
+      if (typeof image.decode === "function") {
+        await image.decode();
+      }
+    } catch {
+      // Some browsers may reject decode even though the image is usable.
+      // The load event confirms that the image loaded successfully.
+    }
+
+    setLoadedImageUrl(imageUrl);
+  };
+
+  const handleImageError = (event) => {
+    const image = event.currentTarget;
+    const imageUrl = image.currentSrc || image.src;
+
+    console.error("Failed to load project image:", imageUrl);
+
+    setFailedImageUrl(imageUrl);
+  };
+
   return (
     <motion.article
       className="project-card"
@@ -109,7 +149,7 @@ const ProjectCard = ({ project }) => {
       initial="hidden"
       whileInView="visible"
       viewport={{
-        once: false,
+        once: true,
         amount: 0.15,
       }}
       whileHover={
@@ -129,34 +169,19 @@ const ProjectCard = ({ project }) => {
     >
       {/* Project image */}
       <div className="project-card__image-wrapper">
-        {resolvedImageUrl && (
+        {resolvedImageUrl && !imageFailed && (
           <motion.img
-            className="project-card__image"
+            key={resolvedImageUrl}
+            className={`project-card__image ${
+              imageLoaded ? "project-card__image--loaded" : ""
+            }`}
             src={resolvedImageUrl}
             alt={`${title || "Project"} project preview`}
             loading="lazy"
-            onError={(event) => {
-              console.error(
-                "Failed to load project image:",
-                event.currentTarget.src
-              );
-
-              // Hide the broken image and reveal the placeholder
-              event.currentTarget.style.display = "none";
-
-              const placeholder =
-                event.currentTarget.parentElement?.querySelector(
-                  ".project-card__image-placeholder"
-                );
-
-              placeholder?.classList.remove(
-                "project-card__image-placeholder--hidden"
-              );
-
-              placeholder?.classList.add(
-                "project-card__image-placeholder--visible"
-              );
-            }}
+            decoding="async"
+            fetchPriority="low"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             whileHover={
               shouldReduceMotion ? undefined : { scale: 1.045 }
             }
@@ -167,9 +192,10 @@ const ProjectCard = ({ project }) => {
           />
         )}
 
+        {/* Placeholder stays visible until the image is ready */}
         <div
           className={`project-card__image-placeholder ${
-            resolvedImageUrl
+            imageLoaded
               ? "project-card__image-placeholder--hidden"
               : "project-card__image-placeholder--visible"
           }`}
@@ -180,7 +206,7 @@ const ProjectCard = ({ project }) => {
           </span>
 
           <span className="project-card__placeholder-label">
-            PROJECT PREVIEW
+            {imageFailed ? "IMAGE UNAVAILABLE" : "PROJECT PREVIEW"}
           </span>
 
           <span className="project-card__placeholder-line" />
@@ -222,7 +248,7 @@ const ProjectCard = ({ project }) => {
         initial="hidden"
         whileInView="visible"
         viewport={{
-          once: false,
+          once: true,
           amount: 0.15,
         }}
       >

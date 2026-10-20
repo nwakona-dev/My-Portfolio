@@ -25,7 +25,6 @@ public class SecurityConfig {
         CookieCsrfTokenRepository repository =
                 CookieCsrfTokenRepository.withHttpOnlyFalse();
 
-        // Allow the browser to send the CSRF cookie across sites over HTTPS.
         repository.setCookieCustomizer(cookie -> cookie
                 .sameSite("None")
                 .secure(true)
@@ -34,6 +33,7 @@ public class SecurityConfig {
         return repository;
     }
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -41,7 +41,6 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
-                // Use the CORS rules defined in CorsConfig.
                 .cors(cors -> {})
 
                 // Keep CSRF protection enabled.
@@ -52,7 +51,7 @@ public class SecurityConfig {
                         )
                 )
 
-                // Use HTTP sessions for authentication.
+                // Use HTTP sessions when authentication is needed.
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.IF_REQUIRED
@@ -69,20 +68,20 @@ public class SecurityConfig {
                                 "/api/projects/**"
                         ).permitAll()
 
-                        // Public project images.
+                        // Publicly accessible uploaded project images.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/uploads/**"
                         ).permitAll()
 
-                        // Public CSRF endpoint and session-status check.
+                        // Public CSRF token and session-status endpoints.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/auth/csrf",
                                 "/api/auth/me"
                         ).permitAll()
 
-                        // Public initial admin setup and login.
+                        // Public login and initial admin setup.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/setup",
@@ -93,30 +92,28 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // All remaining endpoints require authentication.
+                        // Protect all remaining endpoints.
                         .anyRequest().authenticated()
                 )
 
-                // Disable HTTP Basic and the default login page.
+                // Disable default HTTP Basic authentication and login page.
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
-    // Store authenticated security context in the HTTP session.
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
     }
 
-    // Hash passwords with BCrypt.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Provide the AuthenticationManager for the authentication service.
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration

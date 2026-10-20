@@ -1,3 +1,4 @@
+
 server:
   port: ${PORT:5001}
 
@@ -5,11 +6,11 @@ spring:
   application:
     name: my-portfolio
 
-datasource:
-  url: ${DB_URL}
-  username: ${DB_USERNAME}
-  password: ${DB_PASSWORD}
-  driver-class-name: com.mysql.cj.jdbc.Driver
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:

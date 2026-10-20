@@ -1,30 +1,29 @@
+  server:
+    port: ${PORT:5001}
 
-server:
-  port: 5001
+  spring:
+    application:
+      name: my-portfolio
 
-spring:
-  application:
-    name: my-portfolio
+    datasource:
+      url: ${DB_URL}
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
 
-  datasource:
-    url: jdbc:mysql://localhost:3306/my_portfolio_db
-    username: root
-    password: starboy1
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
+    jpa:
       hibernate:
-        format_sql: true
+        ddl-auto: update
+      show-sql: false
+      properties:
+        hibernate:
+          format_sql: false
 
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 6MB
+    servlet:
+      multipart:
+        max-file-size: 5MB
+        max-request-size: 6MB
 
-app:
-  upload:
-    dir: uploads
+  app:
+    upload:
+      dir: ${UPLOAD_DIR:uploads}

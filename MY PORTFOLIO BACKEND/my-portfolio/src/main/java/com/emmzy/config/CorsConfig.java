@@ -1,28 +1,39 @@
+
 package com.emmzy.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
 public class CorsConfig {
 
+    @Value("${app.frontend-url:}")
+    private String frontendUrl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Your React frontend origin
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5174",
-                        "http://localhost:5173")
+        List<String> allowedOrigins = new ArrayList<>(
+                List.of(
+                        "http://localhost:5173",
+                        "http://localhost:5174"
+                )
         );
 
-        // HTTP methods your frontend can use
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            allowedOrigins.add(frontendUrl.trim());
+        }
+
+        configuration.setAllowedOrigins(allowedOrigins);
+
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
@@ -34,15 +45,14 @@ public class CorsConfig {
                 )
         );
 
-        // Headers sent by React
         configuration.setAllowedHeaders(
                 List.of(
+                        "Accept",
                         "Content-Type",
                         "X-XSRF-TOKEN"
                 )
         );
 
-        // Allow session cookies
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =

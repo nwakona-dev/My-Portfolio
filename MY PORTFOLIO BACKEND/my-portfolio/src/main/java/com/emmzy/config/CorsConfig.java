@@ -29,7 +29,9 @@ public class CorsConfig {
         );
 
         if (frontendUrl != null && !frontendUrl.isBlank()) {
-            allowedOrigins.add(frontendUrl.trim());
+            allowedOrigins.add(
+                    frontendUrl.trim().replaceAll("/+$", "")
+            );
         }
 
         configuration.setAllowedOrigins(allowedOrigins);

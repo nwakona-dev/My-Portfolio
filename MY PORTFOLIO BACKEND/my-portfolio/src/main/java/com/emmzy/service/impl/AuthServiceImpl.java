@@ -54,9 +54,9 @@ public class AuthServiceImpl implements AuthService {
 
         if (username == null || username.isBlank()
                 || email == null || email.isBlank()
-                || password == null || password.length() < 5) {
+                || password == null || password.length() < 12) {
             throw new IllegalArgumentException(
-                    "Provide a username, email, and password of at least 5 characters."
+                    "Provide a username, email, and password of at least 12 characters."
             );
         }
 

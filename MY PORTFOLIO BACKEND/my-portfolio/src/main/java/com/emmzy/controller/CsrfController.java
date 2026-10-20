@@ -1,3 +1,4 @@
+
 package com.emmzy.controller;
 
 import org.springframework.security.web.csrf.CsrfToken;
@@ -13,8 +14,11 @@ public class CsrfController {
 
     @GetMapping("/csrf")
     public Map<String, String> csrf(CsrfToken csrfToken) {
+        // Accessing the token causes Spring Security to resolve it.
+        String token = csrfToken.getToken();
+
         return Map.of(
-                "token", csrfToken.getToken(),
+                "token", token,
                 "headerName", csrfToken.getHeaderName()
         );
     }

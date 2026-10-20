@@ -1,4 +1,3 @@
-
 import { apiRequest } from "./apiClient";
 
 const PUBLIC_PROJECTS_URL = "/api/projects";
@@ -38,7 +37,9 @@ export function updateProject(id, project) {
 export function updatePublishedStatus(id, published) {
   return apiRequest(
     `${ADMIN_PROJECTS_URL}/${id}/publish?published=${published}`,
-    { method: "PATCH" }
+    {
+      method: "PATCH",
+    }
   );
 }
 
@@ -48,7 +49,9 @@ export function deleteProject(id) {
   });
 }
 
-// Upload an image selected from File Explorer.
+/**
+ * Upload an image selected from File Explorer.
+ */
 export function uploadProjectImage(file) {
   const body = new FormData();
   body.append("file", file);

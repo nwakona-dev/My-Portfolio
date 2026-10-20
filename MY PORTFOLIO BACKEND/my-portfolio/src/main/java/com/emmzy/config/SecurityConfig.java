@@ -4,7 +4,6 @@ package com.emmzy.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,18 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
 
 @Configuration
 public class SecurityConfig {
@@ -37,6 +25,7 @@ public class SecurityConfig {
         CookieCsrfTokenRepository repository =
                 CookieCsrfTokenRepository.withHttpOnlyFalse();
 
+        // Allow the browser to send the CSRF cookie across sites over HTTPS.
         repository.setCookieCustomizer(cookie -> cookie
                 .sameSite("None")
                 .secure(true)
@@ -52,8 +41,10 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
+                // Use the CORS rules defined in CorsConfig.
                 .cors(cors -> {})
 
+                // Keep CSRF protection enabled.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(
@@ -61,58 +52,71 @@ public class SecurityConfig {
                         )
                 )
 
+                // Use HTTP sessions for authentication.
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.IF_REQUIRED
                         )
                 )
 
+                // Define public and protected endpoints.
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public portfolio project listings and details.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/projects",
                                 "/api/projects/**"
                         ).permitAll()
 
+                        // Public project images.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/uploads/**"
                         ).permitAll()
 
+                        // Public CSRF endpoint and session-status check.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/auth/csrf",
                                 "/api/auth/me"
                         ).permitAll()
 
+                        // Public initial admin setup and login.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/setup",
                                 "/api/auth/login"
                         ).permitAll()
 
+                        // Only authenticated admins can manage projects.
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
+                        // All remaining endpoints require authentication.
                         .anyRequest().authenticated()
                 )
 
+                // Disable HTTP Basic and the default login page.
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
+    // Store authenticated security context in the HTTP session.
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
     }
 
+    // Hash passwords with BCrypt.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Provide the AuthenticationManager for the authentication service.
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration

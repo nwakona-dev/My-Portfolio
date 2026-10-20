@@ -1302,3 +1302,21 @@
   }
 }
 
+
+/* Lazy-loading project images */
+.project-card__image-wrapper {
+  overflow: hidden;
+}
+
+.project-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.project-card__image--loaded {
+  opacity: 1;
+}

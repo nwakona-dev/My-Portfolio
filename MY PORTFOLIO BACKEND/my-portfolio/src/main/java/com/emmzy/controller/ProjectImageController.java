@@ -2,14 +2,12 @@
 package com.emmzy.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +30,11 @@ public class ProjectImageController {
             "image/webp"
     );
 
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDirectory;
+    private final Cloudinary cloudinary;
+
+    public ProjectImageController(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadImage(
@@ -62,48 +63,31 @@ public class ProjectImageController {
             );
         }
 
-        String extension = switch (contentType) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unsupported image type."
-            );
-        };
-
-        String filename = UUID.randomUUID() + extension;
-
         try {
-            Path uploadPath = Paths.get(uploadDirectory)
-                    .toAbsolutePath()
-                    .normalize()
-                    .resolve("projects")
-                    .normalize();
+            Map<?, ?> result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "portfolio/projects",
+                            "resource_type", "image"
+                    )
+            );
 
-            Files.createDirectories(uploadPath);
+            String imageUrl = (String) result.get("secure_url");
 
-            Path destination = uploadPath.resolve(filename).normalize();
-
-            if (!destination.startsWith(uploadPath)) {
+            if (imageUrl == null || imageUrl.isBlank()) {
                 throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid filename."
+                        HttpStatus.BAD_GATEWAY,
+                        "Cloudinary did not return an image URL."
                 );
             }
 
-            file.transferTo(destination);
-
-            String imageUrl = "/uploads/projects/" + filename;
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                    Map.of("imageUrl", imageUrl)
-            );
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("imageUrl", imageUrl));
 
         } catch (IOException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Could not save the uploaded image.",
+                    "Could not upload the image to Cloudinary.",
                     e
             );
         }

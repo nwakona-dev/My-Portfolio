@@ -1,6 +1,8 @@
 
 package com.emmzy.config;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,7 +35,6 @@ public class SecurityConfig {
         return repository;
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -51,30 +52,36 @@ public class SecurityConfig {
                         )
                 )
 
-                // Use HTTP sessions when authentication is needed.
+                // Use HTTP sessions when authentication is required.
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.IF_REQUIRED
                         )
                 )
 
-                // Define public and protected endpoints.
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public portfolio project listings and details.
+                        // Permit error dispatches so the original
+                        // resource error can be handled correctly.
+                        .dispatcherTypeMatchers(
+                                DispatcherType.ERROR
+                        ).permitAll()
+
+                        // Public portfolio projects.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/projects",
                                 "/api/projects/**"
                         ).permitAll()
 
-                        // Publicly accessible uploaded project images.
+                        // Public uploaded project images.
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/uploads",
                                 "/uploads/**"
                         ).permitAll()
 
-                        // Public CSRF token and session-status endpoints.
+                        // Public authentication status and CSRF endpoints.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/auth/csrf",
@@ -88,15 +95,14 @@ public class SecurityConfig {
                                 "/api/auth/login"
                         ).permitAll()
 
-                        // Only authenticated admins can manage projects.
+                        // Admin endpoints require the ADMIN role.
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // Protect all remaining endpoints.
+                        // Protect all other endpoints.
                         .anyRequest().authenticated()
                 )
 
-                // Disable default HTTP Basic authentication and login page.
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable);
 
@@ -112,7 +118,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(

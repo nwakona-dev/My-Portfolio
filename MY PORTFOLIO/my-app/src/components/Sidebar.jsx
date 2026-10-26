@@ -107,6 +107,7 @@
             src="/logo2.png"
             alt="Nwakona Emmanuel"
             className="sidebar-logo-image"
+            loading='lazy'
             />
         </button>
 

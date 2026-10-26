@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -14,7 +14,7 @@ import {
 
 import {
   FaGithub,
- FaLinkedinIn ,
+  FaLinkedinIn,
   FaWhatsapp,
 } from "react-icons/fa";
 
@@ -54,6 +54,8 @@ const floatingVariants = {
 };
 
 export default function Hero() {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <section className="hero" id="home">
       {/* Background effects */}
@@ -61,7 +63,7 @@ export default function Hero() {
       <div className="hero-glow hero-glow-one" />
       <div className="hero-glow hero-glow-two" />
 
-      {/* Workspace image */}
+      {/* Workspace image with loading reveal */}
       <motion.div
         className="hero-workspace"
         initial={{ opacity: 0, scale: 1.04, x: 35 }}
@@ -71,7 +73,12 @@ export default function Hero() {
         <img
           src="/image2.png"
           alt="Laptop displaying code on a cinematic developer desk"
-          className="workspace-image"
+          className={`workspace-image ${imageLoaded ? "loaded" : ""}`}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageLoaded(false)}
         />
       </motion.div>
 
@@ -105,7 +112,10 @@ export default function Hero() {
           className="hero-description"
           variants={itemVariants}
         >
-          I craft elegant, scalable web and mobile applications that turn complex ideas into intuitive digital experiences, combining thoughtful design, clean architecture, and purposeful engineering.
+          I craft elegant, scalable web and mobile applications
+          that turn complex ideas into intuitive digital
+          experiences, combining thoughtful design, clean
+          architecture, and purposeful engineering.
         </motion.p>
 
         {/* Main actions */}
@@ -165,11 +175,11 @@ export default function Hero() {
             whileHover={{ y: -4, scale: 1.12 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaLinkedinIn  size={19} />
+            <FaLinkedinIn size={19} />
           </motion.a>
 
           <motion.a
-            href="https://wa.me/+2348026835314"
+            href="https://wa.me/2348026835314"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="WhatsApp"
@@ -278,7 +288,7 @@ export default function Hero() {
           className="download-cv"
           download
         >
-          <Download size={14} className="download-icon"/>
+          <Download size={14} className="download-icon" />
           <span>Download CV</span>
         </a>
 

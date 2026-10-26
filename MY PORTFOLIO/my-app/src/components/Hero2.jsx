@@ -72,8 +72,6 @@ export default function Hero() {
           src="/image2.png"
           alt="Laptop displaying code on a cinematic developer desk"
           className="workspace-image"
-          loading="lazy"
-          decoding="async"
         />
       </motion.div>
 
